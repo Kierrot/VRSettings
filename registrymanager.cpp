@@ -7,7 +7,7 @@
 QMap<QString, int> RegistryManager::getImplicitKeys(){return GrepRegistryContent(regImp); }
 QMap<QString, int> RegistryManager::getExplicitKeys(){return GrepRegistryContent(regExp);}
 
-QMap<QString, int> RegistryManager::GrepRegistryContent(QString &path){
+QMap<QString, int> RegistryManager::GrepRegistryContent(const QString &path){
     QMap<QString, int> registryMap;
     HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)path.utf16(), 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS){
@@ -23,12 +23,20 @@ QMap<QString, int> RegistryManager::GrepRegistryContent(QString &path){
     return registryMap;
 }
 
-void RegistryManager::setRegistryValue(QString path, QString key, int val){
-    HKEY hkey;
-    DWORD size = sizeof(DWORD);
-    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)path.utf16(), 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hkey) == ERROR_SUCCESS){
-        RegSetValueExW(hkey, (LPCWSTR)key.utf16(), 0, REG_DWORD, (PBYTE)&val, size);
-        RegCloseKey(hkey);
+void RegistryManager::setRegistryValue(const QString &path, const QString &key, int val) {
+    HKEY hKey;
+    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)path.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
+
+        qDebug() << "Меняем параметр:" << path << key << "на значение:" << val;
+        LSTATUS status = RegSetValueExW(hKey, (LPCWSTR)key.utf16(), 0, REG_DWORD, (const BYTE*)&val, sizeof(val));
+        if(status == ERROR_SUCCESS) {
+            qDebug() << "Успешно записано!";
+        } else {
+            qDebug() << "Ошибка записи! Код:" << status;
+        }
+        RegCloseKey(hKey);
+    } else {
+        qDebug() << "Не удалось открыть путь:" << path;
     }
 }
 #endif

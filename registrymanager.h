@@ -6,16 +6,16 @@
 class RegistryManager
 {
 public:
-    QString regImp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
-    QString regExp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Explicit";
-
-    void setRegistryValue(QString path, QString key, int val);
-    QMap<QString, int> GrepRegistryContent(QString &path);
+    QString getImpPath() { return regImp; }
+    QString getExpPath() { return regExp; }
     QMap<QString, int> getImplicitKeys();
     QMap<QString, int> getExplicitKeys();
+    void setRegistryValue(const QString &path, const QString &key, int val);
 
-    void Initialize();
-
+private:
+    QString regImp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
+    QString regExp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Explicit";
+    QMap<QString, int> GrepRegistryContent(const QString &path);
 };
 
 #endif // REGISTRYMANAGER_H
