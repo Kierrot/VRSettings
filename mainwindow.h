@@ -27,8 +27,8 @@ public:
 private:
     Ui::MainWindow *ui;
     RegistryManager regManager;
-    void fillList(QListWidget *list, const QMap<QString, int> &registryMap, bool checksNeeded, const QString &branchPath);
-    void updateList(QListWidget *list, const QMap<QString, int> &registryMap);
+    void fillList(QListWidget *list, const QList<QPair<QString, int>> &registryMap, bool checksNeeded, const QString &branchPath);
+    void updateList(QListWidget *list, const const QList<QPair<QString, int>> &registryMap);
 
 private slots:
     void on_impLayers_itemChanged(QListWidgetItem *item);
