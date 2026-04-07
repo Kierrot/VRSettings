@@ -13,6 +13,7 @@ public:
     //void changeLayersSystemOrder(QList<QPair<QString, int>>);
     void setRegistryValue(const QString &path, const QString &key, int val);
 
+
 private:
     QString regImp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
     QString regExp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Explicit";

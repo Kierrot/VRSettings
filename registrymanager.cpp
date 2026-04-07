@@ -6,24 +6,6 @@
 
 QList<QPair<QString, int>> RegistryManager::getImplicitKeys(){return GrepRegistryContent(regImp); }
 QList<QPair<QString, int>> RegistryManager::getExplicitKeys(){return GrepRegistryContent(regExp);}
-
-/*QMap<QString, int> RegistryManager::GrepRegistryContent(const QString &path){
-    QMap<QString, int> registryMap;
-    HKEY hKey;
-    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)path.utf16(), 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS){
-        wchar_t keys[MAX_PATH];
-        DWORD keySize = 1024, index = 0, val = 0, size = sizeof(DWORD);
-        while(RegEnumValueW (hKey, index, keys, &keySize, nullptr, nullptr, (LPBYTE)&val, &size) == ERROR_SUCCESS){
-            registryMap.insert(QString::fromWCharArray(keys, keySize), val);
-            qDebug() << QString::fromWCharArray(keys, keySize), val;
-            index++;
-            keySize = 1024, size = sizeof(DWORD);
-        }
-    }
-    RegCloseKey(hKey);
-    return registryMap;
-}*/
-
 QList<QPair<QString, int>> RegistryManager::GrepRegistryContent(const QString &path){
     QList<QPair<QString, int>> registryMap;
     HKEY hKey;
@@ -46,17 +28,16 @@ void RegistryManager::setRegistryValue(const QString &path, const QString &key, 
     HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)path.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
 
-        qDebug() << "Меняем параметр:" << path << key << "на значение:" << val;
+        qDebug() << "Changing key:" << path << key << "to value:" << val;
         LSTATUS status = RegSetValueExW(hKey, (LPCWSTR)key.utf16(), 0, REG_DWORD, (const BYTE*)&val, sizeof(val));
-        if(status == ERROR_SUCCESS) {
-            qDebug() << "Успешно записано!";
-        } else {
-            qDebug() << "Ошибка записи! Код:" << status;
+        if(status != ERROR_SUCCESS) {
+            qDebug() << "ERROR status:" << status;
         }
         RegCloseKey(hKey);
     } else {
-        qDebug() << "Не удалось открыть путь:" << path;
+        qDebug() << "Can't find path:" << path;
     }
 }
+
 #endif
 

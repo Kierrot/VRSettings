@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "filemanager.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -8,7 +9,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     updateGlobalLists();
     connect(ui->syncWithReg, &QPushButton::clicked, this, &MainWindow::updateGlobalLists);
-
+    /*setDragEnabled(true);
+    setAcceptDrops(true);
+    setInternalMove(true);
+    setSelectionMode(QAbstractItemView::SingleSelection);*/
 }
 
 MainWindow::~MainWindow()
@@ -20,11 +24,6 @@ void MainWindow::showDebugLog(QString message){
     ui->statusbar->showMessage(message);
 }
 
-QString cropPath(QString path){
-    return QFileInfo(path).baseName();
-}
-
-
 void MainWindow::updateGlobalLists(){
     fillList(ui->impLayers, regManager.getImplicitKeys(), true, regManager.getImpPath());
     fillList(ui->expLayers, regManager.getExplicitKeys(), false, regManager.getExpPath());
@@ -35,7 +34,8 @@ void MainWindow::fillList(QListWidget *list, const QList<QPair<QString, int>> &r
     list->blockSignals(true);
     for (const auto &pair : registryMap){
         const QString &rkey = pair.first;
-        QListWidgetItem *item = new QListWidgetItem(cropPath(rkey), list);
+        QString layerName = FileManager::getJsonElementByName(rkey, "name");
+        QListWidgetItem *item = new QListWidgetItem(layerName, list);
         item->setToolTip(rkey);
         item->setData(Qt::UserRole, branchPath);
         if(checksNeeded){
