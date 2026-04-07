@@ -27,8 +27,9 @@ public:
 private:
     Ui::MainWindow *ui;
     RegistryManager regManager;
+    void updateGlobalLists();
     void fillList(QListWidget *list, const QList<QPair<QString, int>> &registryMap, bool checksNeeded, const QString &branchPath);
-    void updateList(QListWidget *list, const const QList<QPair<QString, int>> &registryMap);
+    void updateList(QListWidget *list, const QList<QPair<QString, int>> &registryMap);
 
 private slots:
     void on_impLayers_itemChanged(QListWidgetItem *item);

@@ -66,7 +66,7 @@
       <item row="7" column="3">
        <widget class="QPushButton" name="syncWithReg">
         <property name="text">
-         <string>Sync Layers States</string>
+         <string>Sync Layers with System's</string>
         </property>
        </widget>
       </item>
