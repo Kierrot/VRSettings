@@ -6,6 +6,7 @@
 #include <QListWidgetItem>
 #include <QFileInfo>
 #include "registrymanager.h"
+using RegistryEntry = QPair<QString, int>;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,9 +28,14 @@ public:
 private:
     Ui::MainWindow *ui;
     RegistryManager regManager;
+    QList<RegistryEntry> m_implicitLayers;
+    QList<RegistryEntry> m_explicitLayers;
+
+    QList<RegistryEntry> getList(QListWidget *list);
+    void updateLocalLists();
     void updateGlobalLists();
-    void fillList(QListWidget *list, const QList<QPair<QString, int>> &registryMap, bool checksNeeded, const QString &branchPath);
-    void updateList(QListWidget *list, const QList<QPair<QString, int>> &registryMap);
+    void fillList(QListWidget *list, const QList<RegistryEntry> &registryMap, bool checksNeeded, const QString &branchPath);
+    void updateList(QListWidget *list, const QList<RegistryEntry> &registryMap);
 
 private slots:
     void on_impLayers_itemChanged(QListWidgetItem *item);

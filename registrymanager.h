@@ -2,25 +2,27 @@
 #define REGISTRYMANAGER_H
 
 #include <QSettings>
+using RegistryEntry = QPair<QString, int>;
 
 class RegistryManager
 {
 public:
-    QString getImpPath() { return regImp; }
-    QString getExpPath() { return regExp; }
-    QList<QPair<QString, int>> getImplicitKeys();
-    QList<QPair<QString, int>> getExplicitKeys();
-    //void changeLayersSystemOrder(QList<QPair<QString, int>>);
-    void setRegistryValue(const QString &path, const QString &key, int val);
-
+    enum class LayerType {
+        Implicit,
+        Explicit
+    };
+    QString getLayerKey(LayerType);
+    QList<RegistryEntry> getImplicitKeys();
+    QList<RegistryEntry> getExplicitKeys();
+    void changeLayersSystemOrder(RegistryManager::LayerType layerAddress, QList<RegistryEntry>);
+    void setRegistryValueData(const QString &path, const QString &key, int val);
 
 private:
-    QString regImp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
-    QString regExp = "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Explicit";
-    QList<QPair<QString, int>> GrepRegistryContent(const QString &path);
-    //void clearRegistryFolder(const QString &path);
-    //void createRegistryKey(const QString &path, const QString &key, int val);
-    //void deleteRegistryKey(const QString &path, const QString &key, int val);
+    QList<RegistryEntry> GrepRegistryContent(const QString &path);
+    void clearRegistryFolder(const QString &path);
+    void createRegistryValue(const QString &path, const QString &key, int val);
+    void deleteRegistryValue(const QString &path, const QString &key);
+
 };
 
 #endif // REGISTRYMANAGER_H
