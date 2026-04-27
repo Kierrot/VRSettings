@@ -5,7 +5,7 @@ QJsonDocument FileManager::openJson(const QString &jsonPath){
     QFile jsonFile = jsonPath;
 
     if (!jsonFile.open(QIODevice::ReadOnly)) {
-        qDebug() << ".json reading error:" << jsonFile.errorString();
+        qDebug()  << jsonPath << ".json reading error:" << jsonFile.errorString();
         return QJsonDocument();
     }
 
@@ -15,7 +15,7 @@ QJsonDocument FileManager::openJson(const QString &jsonPath){
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(data, &error);
     if(doc.isNull()){
-        qDebug() << ".json reading error:" << error.errorString();
+        qDebug() << jsonPath << ".json reading error:" << error.errorString();
         return QJsonDocument();
     }
     return doc;

@@ -7,18 +7,28 @@ using RegistryEntry = QPair<QString, int>;
 class RegistryManager
 {
 public:
-    enum class LayerType {
+    enum class DataType {
         Implicit,
-        Explicit
+        Explicit,
+        RuntimeAvailable,
+        RuntimeActive
     };
-    QString getLayerKey(LayerType);
-    QList<RegistryEntry> getImplicitKeys();
-    QList<RegistryEntry> getExplicitKeys();
-    void changeLayersSystemOrder(RegistryManager::LayerType layerAddress, QList<RegistryEntry>);
+
+    RegistryManager();
+
+    QString getRegKey(DataType);
+    QList<RegistryEntry> implicitLayers;
+    QList<RegistryEntry> explicitLayers;
+    QList<RegistryEntry> availableRuntimes;
+    QString activeRuntime;
+
+    void updateLists();
+    void changeLayersSystemOrder(RegistryManager::DataType layerAddress, QList<RegistryEntry>);
     void setRegistryValueData(const QString &path, const QString &key, int val);
 
 private:
-    QList<RegistryEntry> GrepRegistryContent(const QString &path);
+    QList<RegistryEntry> grepRegistryContent(const QString &path);
+    QString grepRegistryContent(const QString &path, const QString &search);
     void clearRegistryFolder(const QString &path);
     void createRegistryValue(const QString &path, const QString &key, int val);
     void deleteRegistryValue(const QString &path, const QString &key);

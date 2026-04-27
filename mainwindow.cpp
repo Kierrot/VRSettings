@@ -2,43 +2,47 @@
 #include "filemanager.h"
 #include "ui_mainwindow.h"
 
-void printArray(QList<RegistryEntry> list){
-    for(const auto pair : list){
-        qDebug() << "p1" << pair.first << "p2"  << pair.second;
-    }
-}
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    updateLocalLists();
 
-    updateGlobalLists();
-    connect(ui->syncWithReg, &QPushButton::clicked, this, &MainWindow::updateGlobalLists);
+    connect(ui->syncWithReg, &QPushButton::clicked, this, [this]() {
+        regManager.updateLists();
+    });
 
     connect(ui->impLayers->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex&, int start, int end, const QModelIndex&, int dest) {
-                if (dest >= m_implicitLayers.size()) {
-                    dest = m_implicitLayers.size() - 1;
+                if (dest >= regManager.implicitLayers.size()) {
+                    dest = regManager.implicitLayers.size() - 1;
                 }
-                qDebug() << "BEFORE";
-                printArray(m_implicitLayers);
-                qDebug() << "AFTER";
-                m_implicitLayers.move(start, dest);
-                printArray(m_implicitLayers);
-                regManager.changeLayersSystemOrder(RegistryManager::LayerType::Implicit, m_implicitLayers);
+                regManager.implicitLayers.move(start, dest);
+                regManager.changeLayersSystemOrder(RegistryManager::DataType::Implicit, regManager.implicitLayers);
             });
 
     connect(ui->expLayers->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex&, int start, int end, const QModelIndex&, int dest) {
-                if (dest >= m_explicitLayers.size()) {
-                    dest = m_explicitLayers.size() - 1;
+                if (dest >= regManager.explicitLayers.size()) {
+                    dest = regManager.explicitLayers.size() - 1;
                 }
-                m_explicitLayers.move(start, dest);
-                regManager.changeLayersSystemOrder(RegistryManager::LayerType::Explicit, m_explicitLayers);
+                regManager.explicitLayers.move(start, dest);
+                regManager.changeLayersSystemOrder(RegistryManager::DataType::Explicit, regManager.explicitLayers);
             });
+
+    fillListWidget(ui->impLayers,
+                   fetchData(regManager.implicitLayers, RegistryManager::DataType::Implicit),
+                   regManager.getRegKey(RegistryManager::DataType::Implicit)
+                   );
+
+    fillListWidget(ui->expLayers,
+                   fetchData(regManager.explicitLayers, RegistryManager::DataType::Explicit),
+                   regManager.getRegKey(RegistryManager::DataType::Explicit)
+                   );
+
+    fillComboBox(ui->runtimeComboBox,
+                 fetchData(regManager.availableRuntimes, RegistryManager::DataType::RuntimeAvailable)
+                 );
 }
 
 MainWindow::~MainWindow()
@@ -46,36 +50,57 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::updateLocalLists(){
-    m_implicitLayers = regManager.getImplicitKeys();
-    m_explicitLayers = regManager.getExplicitKeys();
+QList<MainWindow::Item> MainWindow::fetchData(const QList<RegistryEntry> &registryMap, RegistryManager::DataType dataType) {
+    QList<MainWindow::Item> items;
+    for (const auto &pair : registryMap) {
+        QString rkey = pair.first, name = FileManager::getJsonElementByName(rkey, "name");
+        int isActive;
+        if(dataType == RegistryManager::DataType::RuntimeAvailable && name == FileManager::getJsonElementByName(regManager.activeRuntime, "name")){
+            isActive = 1;
+        }
+        else
+            isActive = pair.second;
+
+        items.append({
+            dataType,
+            name,
+            rkey,
+            isActive
+        });
+    }
+    return items;
 }
 
-void MainWindow::updateGlobalLists(){
-    fillList(ui->impLayers, m_implicitLayers, true, regManager.getLayerKey(RegistryManager::LayerType::Implicit));
-    fillList(ui->expLayers, m_explicitLayers, false, regManager.getLayerKey(RegistryManager::LayerType::Explicit));
-}
-
-void MainWindow::fillList(QListWidget *list, const QList<RegistryEntry> &registryMap, bool checksNeeded, const QString &branchPath){
+void MainWindow::fillListWidget(QListWidget *list, const QList<Item> &items, const QString &branchPath) {
     list->clear();
     list->blockSignals(true);
-    for (const auto &pair : registryMap){
-        const QString &rkey = pair.first;
-        QString layerName = FileManager::getJsonElementByName(rkey, "name");
-        QListWidgetItem *item = new QListWidgetItem(layerName, list);
-        item->setToolTip(rkey);
+    for (const auto &itemData : items) {
+        QListWidgetItem *item = new QListWidgetItem(itemData.displayName, list);
+        item->setToolTip(itemData.registryKey);
         item->setData(Qt::UserRole, branchPath);
-        if(checksNeeded){
+        if(itemData.type == RegistryManager::DataType::Implicit){
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(pair.second == 0 ? Qt::Checked : Qt::Unchecked);
+            item->setCheckState(itemData.isActive == 0 ? Qt::Checked : Qt::Unchecked);
         }
     }
     list->setDragDropMode(QAbstractItemView::InternalMove);
     list->blockSignals(false);
 }
 
+void MainWindow::fillComboBox(QComboBox *combo, const QList<Item> &items) {
+    combo->clear();
+    for (const auto &itemData : items) {
+        combo->addItem(itemData.displayName, itemData.registryKey);
+    }
+
+
+}
+
 void MainWindow::on_impLayers_itemChanged(QListWidgetItem *item) {
-    regManager.setRegistryValueData(item->data(Qt::UserRole).toString(), item->toolTip(), item->checkState() ==  Qt::Checked ? 0 : 1);
-    updateLocalLists();
+    regManager.setRegistryValueData(
+        item->data(Qt::UserRole).toString(),
+        item->toolTip(),
+        item->checkState() ==  Qt::Checked ? 0 : 1
+    );
 }
 

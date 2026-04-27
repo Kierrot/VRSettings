@@ -5,6 +5,7 @@
 #include <QList>
 #include <QListWidgetItem>
 #include <QFileInfo>
+#include <QComboBox>
 #include "registrymanager.h"
 using RegistryEntry = QPair<QString, int>;
 
@@ -26,14 +27,20 @@ public:
 
 
 private:
+    struct Item {
+        RegistryManager::DataType type;
+        QString displayName;
+        QString registryKey;
+        int isActive;
+    };
+
     Ui::MainWindow *ui;
     RegistryManager regManager;
-    QList<RegistryEntry> m_implicitLayers;
-    QList<RegistryEntry> m_explicitLayers;
-
+    QList<MainWindow::Item> fetchData(const QList<RegistryEntry> &registryMap, RegistryManager::DataType dataType);
+    void fillListWidget(QListWidget *list, const QList<Item> &items, const QString &branchPath);
+    void fillComboBox(QComboBox *combo, const QList<Item> &items);
     QList<RegistryEntry> getList(QListWidget *list);
-    void updateLocalLists();
-    void updateGlobalLists();
+
     void fillList(QListWidget *list, const QList<RegistryEntry> &registryMap, bool checksNeeded, const QString &branchPath);
     void updateList(QListWidget *list, const QList<RegistryEntry> &registryMap);
 
