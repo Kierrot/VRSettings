@@ -139,17 +139,19 @@ QList<DataManager::Item> DataManager::fetchData(DataManager::DataType dataType) 
     }
 
     QString activeRuntimeName = FileManager::getJsonElementByName(activeRuntime, "name");
+    bool foundActive = false;
+
     QList<DataManager::Item> items;
 
     for (const auto &pair : list) {
         QString rkey = pair.first, name = FileManager::getJsonElementByName(rkey, "name");
         int isActive;
 
-        if(
-            dataType == DataManager::DataType::RuntimeAvailable &&
-            name == activeRuntimeName
-            )
+        if(dataType == DataManager::DataType::RuntimeAvailable &&
+            name == activeRuntimeName){
             isActive = 1;
+            foundActive = true;
+        }
 
         else
             isActive = pair.second;
@@ -160,8 +162,18 @@ QList<DataManager::Item> DataManager::fetchData(DataManager::DataType dataType) 
             rkey,
             isActive
         });
+
         qDebug() << "registryKey" << rkey;
     }
+    if(dataType == DataManager::DataType::RuntimeAvailable && !foundActive){
+        items.prepend({
+            DataManager::DataType::RuntimeActive,
+            FileManager::getJsonElementByName(activeRuntime, "name"),
+            activeRuntime,
+            1
+        });
+    }
+
     if(dataType == DataManager::DataType::RuntimeAvailable)
         moveToFront(items);
 
