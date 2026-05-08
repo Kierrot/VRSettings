@@ -16,8 +16,9 @@ qt_add_executable(VR_Settings
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    registrymanager.h registrymanager.cpp
+    datamanager.h datamanager.cpp
     filemanager.h filemanager.cpp
+
 )
 
 target_link_libraries(VR_Settings

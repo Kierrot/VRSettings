@@ -4,21 +4,19 @@
 QJsonDocument FileManager::openJson(const QString &jsonPath){
     QFile jsonFile = jsonPath;
 
-    if (!jsonFile.open(QIODevice::ReadOnly)) {
-        qDebug()  << jsonPath << ".json reading error:" << jsonFile.errorString();
-        return QJsonDocument();
-    }
+    if (isFileExists(jsonPath)) {
+        jsonFile.open(QIODevice::ReadOnly);
+        QByteArray data = jsonFile.readAll();
+        jsonFile.close();
 
-    QByteArray data = jsonFile.readAll();
-    jsonFile.close();
-
-    QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-    if(doc.isNull()){
-        qDebug() << jsonPath << ".json reading error:" << error.errorString();
-        return QJsonDocument();
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+        if(doc.isNull()){
+            qDebug() << jsonPath << ".json reading error:" << error.errorString();
+            return QJsonDocument();
+        }
+        return doc;
     }
-    return doc;
 }
 
 QString FileManager::getJsonElementByName(const QString &jsonPath, const QString &property){
@@ -46,3 +44,61 @@ QJsonValue FileManager::getJsonElementByName(const QJsonObject &obj, const QStri
     }
     return QJsonValue();
 }
+
+bool FileManager::isFileExists(const QString &jsonPath){
+    QFile jsonFile = jsonPath;
+
+    if (!jsonFile.open(QIODevice::ReadOnly)) {
+        qDebug()  << jsonPath << ".json reading error:" << jsonFile.errorString();
+        return false;
+    }
+    return true;
+}
+
+
+bool FileManager::createJSON(const QString &jsonPath){
+    QFile jsonFile = jsonPath;
+
+    if (!jsonFile.open(QIODevice::ReadOnly)) {
+        QFile file(jsonPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            file.close();
+            return true;
+
+        } else {
+            qDebug() << "Could not create file:" << file.errorString();
+            return false;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

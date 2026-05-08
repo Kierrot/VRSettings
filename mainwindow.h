@@ -6,8 +6,9 @@
 #include <QListWidgetItem>
 #include <QFileInfo>
 #include <QComboBox>
-#include "registrymanager.h"
-using RegistryEntry = QPair<QString, int>;
+#include "datamanager.h"
+#include "filemanager.h"
+#include "ui_mainwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,26 +24,15 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void showDebugLog(QString message);
-    void updateLayersLists();
-
 
 private:
-    struct Item {
-        RegistryManager::DataType type;
-        QString displayName;
-        QString registryKey;
-        int isActive;
-    };
-
     Ui::MainWindow *ui;
-    RegistryManager regManager;
-    QList<MainWindow::Item> fetchData(const QList<RegistryEntry> &registryMap, RegistryManager::DataType dataType);
-    void fillListWidget(QListWidget *list, const QList<Item> &items, const QString &branchPath);
-    void fillComboBox(QComboBox *combo, const QList<Item> &items);
-    QList<RegistryEntry> getList(QListWidget *list);
+    DataManager manager;
+    void updateUI();
+    void blockAllSignals(bool flag);
+    void fillListWidget(QListWidget *list, const QList<DataManager::Item> &items, const QString &branchPath);
+    void fillComboBox(QComboBox *combo, const QList<DataManager::Item> &items);
 
-    void fillList(QListWidget *list, const QList<RegistryEntry> &registryMap, bool checksNeeded, const QString &branchPath);
-    void updateList(QListWidget *list, const QList<RegistryEntry> &registryMap);
 
 private slots:
     void on_impLayers_itemChanged(QListWidgetItem *item);

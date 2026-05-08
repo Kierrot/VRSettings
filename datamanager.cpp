@@ -1,13 +1,14 @@
-#include "registrymanager.h"
+#include "datamanager.h"
+#include "filemanager.h"
 #include <windows.h>
 #include <QDebug>
 #ifdef Q_OS_WIN
 
-RegistryManager::RegistryManager(){
+DataManager::DataManager(){
     updateLists();
 }
 
-QString RegistryManager::getRegKey(DataType type){
+QString DataManager::getRegKey(DataType type){
     switch (type) {
     case DataType::Implicit:
         return "SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
@@ -23,14 +24,14 @@ QString RegistryManager::getRegKey(DataType type){
     }
 }
 
-void RegistryManager::updateLists(){
+void DataManager::updateLists(){
     implicitLayers = grepRegistryContent(getRegKey(DataType::Implicit));
     explicitLayers = grepRegistryContent(getRegKey(DataType::Explicit));
     availableRuntimes = grepRegistryContent(getRegKey(DataType::RuntimeAvailable));
     activeRuntime = grepRegistryContent(getRegKey(DataType::RuntimeActive), "ActiveRuntime");
 }
 
-QString RegistryManager::grepRegistryContent(const QString &subKey, const QString &search){
+QString DataManager::grepRegistryContent(const QString &subKey, const QString &search){
     HKEY hKey;
     wchar_t buffer[MAX_PATH];
     DWORD size = sizeof(buffer);
@@ -44,8 +45,7 @@ QString RegistryManager::grepRegistryContent(const QString &subKey, const QStrin
     return NULL;
 }
 
-
-QList<RegistryEntry> RegistryManager::grepRegistryContent(const QString &subKey){
+QList<RegistryEntry> DataManager::grepRegistryContent(const QString &subKey){
     QList<RegistryEntry> registryMap;
     HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS){
@@ -63,7 +63,7 @@ QList<RegistryEntry> RegistryManager::grepRegistryContent(const QString &subKey)
     return registryMap;
 }
 
-void RegistryManager::setRegistryValueData(const QString &subKey, const QString &valueName, int value) {
+void DataManager::setRegistryValueData(const QString &subKey, const QString &valueName, int value) {
     HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
         qDebug() << "Changing key:" << valueName << "to value:" << value;
@@ -74,30 +74,98 @@ void RegistryManager::setRegistryValueData(const QString &subKey, const QString 
     }
 }
 
-void RegistryManager::changeLayersSystemOrder(RegistryManager::DataType layer, QList<RegistryEntry> list){
+void DataManager::setRegistryValueData(const QString &subKey, const QString &valueName, QString value) {
+    HKEY hKey;
+    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
+        qDebug() << "Changing key:" << valueName << "to value:" << value;
+        LSTATUS status = RegSetValueExW(hKey, (LPCWSTR)valueName.utf16(), 0, REG_EXPAND_SZ, (const BYTE*)value.utf16(), value.length() * sizeof(short) );
+        RegCloseKey(hKey);
+    } else {
+        qDebug() << "Can't find path:" << subKey;
+    }
+}
+
+
+void DataManager::changeLayersSystemOrder(DataManager::DataType layer, QList<RegistryEntry> list){
+    qDebug() << "=== CHANGING LAYERS ORDER. LIST ===";
     for(const auto &pair : list){
         deleteRegistryValue(getRegKey(layer), pair.first);
     }
     for(const auto &pair : list){
         createRegistryValue(getRegKey(layer), pair.first, pair.second);
-        qDebug() << "valuename " << pair.first << "val " << pair.second;
+        qDebug() << pair.first <<  pair.second;
     }
 }
 
-void RegistryManager::createRegistryValue(const QString &subKey, const QString &valueName, int value){
+void DataManager::createRegistryValue(const QString &subKey, const QString &valueName, int value){
     HKEY hKey;
     RegCreateKeyEx(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
     setRegistryValueData(subKey, valueName, value);
-    //qDebug() << "key created. key" << valueName << "val" << value;
     RegCloseKey(hKey);
 }
 
-void RegistryManager::deleteRegistryValue(const QString &subKey, const QString &valueName) {
+void DataManager::deleteRegistryValue(const QString &subKey, const QString &valueName) {
     LSTATUS status = RegDeleteKeyValueW(
         HKEY_LOCAL_MACHINE,
         (LPCWSTR)subKey.utf16(),
         (LPCWSTR)valueName.utf16()
     );
+}
+
+QList<DataManager::Item> DataManager::moveToFront(QList<DataManager::Item> &list) {
+    for (int i = 0; i < list.size(); ++i) {
+        if (list[i].isActive == 1) {
+            list.move(i, 0);
+            break;
+        }
+    }
+    return list;
+}
+
+QList<DataManager::Item> DataManager::fetchData(DataManager::DataType dataType) {
+    QList<RegistryEntry> list;
+    switch(dataType){
+    case DataType::Explicit :
+        list = DataManager::explicitLayers;
+        break;
+    case DataType::Implicit :
+        list = DataManager::implicitLayers;
+        break;
+    case DataType::RuntimeAvailable :
+        list = DataManager::availableRuntimes;
+        break;
+    default :
+        break;
+    }
+
+    QString activeRuntimeName = FileManager::getJsonElementByName(activeRuntime, "name");
+    QList<DataManager::Item> items;
+
+    for (const auto &pair : list) {
+        QString rkey = pair.first, name = FileManager::getJsonElementByName(rkey, "name");
+        int isActive;
+
+        if(
+            dataType == DataManager::DataType::RuntimeAvailable &&
+            name == activeRuntimeName
+            )
+            isActive = 1;
+
+        else
+            isActive = pair.second;
+
+        items.append({
+            dataType,
+            name,
+            rkey,
+            isActive
+        });
+        qDebug() << "registryKey" << rkey;
+    }
+    if(dataType == DataManager::DataType::RuntimeAvailable)
+        moveToFront(items);
+
+    return items;
 }
 #endif
 
