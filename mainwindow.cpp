@@ -34,7 +34,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->runtimeComboBox, &QComboBox::currentIndexChanged, this,
             [this](){
-                manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::RuntimeActive), "ActiveRuntime", ui->runtimeComboBox->currentData().toString());
+                manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::RuntimeActive),
+                                     "ActiveRuntime",
+                                     ui->runtimeComboBox->currentData().toString(),
+                                     DataManager::RegType::String
+                                     );
     });
 
 }
@@ -99,7 +103,8 @@ void MainWindow::on_impLayers_itemChanged(QListWidgetItem *item) {
     manager.setRegistryValueData(
         item->data(Qt::UserRole).toString(),
         item->toolTip(),
-        item->checkState() ==  Qt::Checked ? 0 : 1
+        item->checkState() ==  Qt::Checked ? 0 : 1,
+        DataManager::RegType::DWord
     );
 }
 

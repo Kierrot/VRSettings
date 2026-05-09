@@ -63,22 +63,30 @@ QList<RegistryEntry> DataManager::grepRegistryContent(const QString &subKey){
     return registryMap;
 }
 
-void DataManager::setRegistryValueData(const QString &subKey, const QString &valueName, int value) {
+void DataManager::setRegistryValueData(const QString &subKey, const QString &valueName, QVariant value, DataManager::RegType type) {
     HKEY hKey;
-    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
-        qDebug() << "Changing key:" << valueName << "to value:" << value;
-        LSTATUS status = RegSetValueExW(hKey, (LPCWSTR)valueName.utf16(), 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
-        RegCloseKey(hKey);
-    } else {
-        qDebug() << "Can't find path:" << subKey;
+    DWORD winType, dataSize;
+    const BYTE* dataPtr;
+    int intVal;
+    QString strVal;
+    qDebug() << "Changing key:" << valueName << "to value:" << value;
+    switch(type){
+    case RegType::DWord :
+        winType = REG_DWORD;
+        intVal = value.toInt();
+        dataPtr = (const BYTE*)&intVal;
+        dataSize = sizeof(REG_DWORD);
+        break;
+    case RegType::String :
+        winType = REG_SZ;
+        strVal = value.toString();
+        dataPtr = (const BYTE*)strVal.utf16();
+        dataSize = (value.toString().length() + 1) * sizeof(short);
+        break;
     }
-}
 
-void DataManager::setRegistryValueData(const QString &subKey, const QString &valueName, QString value) {
-    HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS) {
-        qDebug() << "Changing key:" << valueName << "to value:" << value;
-        LSTATUS status = RegSetValueExW(hKey, (LPCWSTR)valueName.utf16(), 0, REG_EXPAND_SZ, (const BYTE*)value.utf16(), value.length() * sizeof(short) );
+        RegSetValueExW(hKey, (LPCWSTR)valueName.utf16(), 0, winType, dataPtr, dataSize);
         RegCloseKey(hKey);
     } else {
         qDebug() << "Can't find path:" << subKey;
@@ -92,15 +100,15 @@ void DataManager::changeLayersSystemOrder(DataManager::DataType layer, QList<Reg
         deleteRegistryValue(getRegKey(layer), pair.first);
     }
     for(const auto &pair : list){
-        createRegistryValue(getRegKey(layer), pair.first, pair.second);
+        createRegistryValue(getRegKey(layer), pair.first);
+        setRegistryValueData(getRegKey(layer), pair.first, pair.second, DataManager::RegType::DWord);
         qDebug() << pair.first <<  pair.second;
     }
 }
 
-void DataManager::createRegistryValue(const QString &subKey, const QString &valueName, int value){
+void DataManager::createRegistryValue(const QString &subKey, const QString &valueName){
     HKEY hKey;
     RegCreateKeyEx(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-    setRegistryValueData(subKey, valueName, value);
     RegCloseKey(hKey);
 }
 
@@ -162,9 +170,8 @@ QList<DataManager::Item> DataManager::fetchData(DataManager::DataType dataType) 
             rkey,
             isActive
         });
-
-        qDebug() << "registryKey" << rkey;
     }
+
     if(dataType == DataManager::DataType::RuntimeAvailable && !foundActive){
         items.prepend({
             DataManager::DataType::RuntimeActive,

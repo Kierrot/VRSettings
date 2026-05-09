@@ -15,6 +15,12 @@ public:
         RuntimeActive
     };
 
+    enum class RegType {
+        DWord,    //int
+        String,     //REG_SZ
+        ExpandString //REG_EXPAND_SZ
+    };
+
     DataManager();
 
     QString getRegKey(DataType);
@@ -25,8 +31,7 @@ public:
 
     void updateLists();
     void changeLayersSystemOrder(DataManager::DataType layerAddress, QList<RegistryEntry>);
-    void setRegistryValueData(const QString &path, const QString &key, int val);
-    void setRegistryValueData(const QString &path, const QString &key, QString val);
+    void setRegistryValueData(const QString &path, const QString &key, QVariant val, DataManager::RegType type);
 
     struct Item {
         DataManager::DataType type;
@@ -43,7 +48,7 @@ private:
     QString grepRegistryContent(const QString &path, const QString &search);
 
     void clearRegistryFolder(const QString &path);
-    void createRegistryValue(const QString &path, const QString &key, int val);
+    void createRegistryValue(const QString &path, const QString &key);
     void deleteRegistryValue(const QString &path, const QString &key);
 
 };
