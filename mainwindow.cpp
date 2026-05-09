@@ -9,9 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->syncWithReg, &QPushButton::clicked, this, [this]() {
         manager.updateLists();
-        blockAllSignals(true);
         updateUI();
-        blockAllSignals(false);
     });
 
     connect(ui->impLayers->model(), &QAbstractItemModel::rowsMoved, this,
@@ -54,6 +52,7 @@ void MainWindow::blockAllSignals(bool flag){
 }
 
 void MainWindow::updateUI(){
+    blockAllSignals(true);
     ui->impLayers->clear();
     ui->expLayers->clear();
     ui->runtimeComboBox->clear();
@@ -71,7 +70,7 @@ void MainWindow::updateUI(){
     fillComboBox(ui->runtimeComboBox,
                  manager.fetchData(DataManager::DataType::RuntimeAvailable)
                  );
-
+    blockAllSignals(false);
 }
 
 void MainWindow::fillListWidget(QListWidget *list, const QList<DataManager::Item> &items, const QString &branchPath) {
@@ -106,5 +105,6 @@ void MainWindow::on_impLayers_itemChanged(QListWidgetItem *item) {
         item->checkState() ==  Qt::Checked ? 0 : 1,
         DataManager::RegType::DWord
     );
+    manager.updateLists();
 }
 

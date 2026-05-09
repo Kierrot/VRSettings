@@ -17,8 +17,7 @@ public:
 
     enum class RegType {
         DWord,    //int
-        String,     //REG_SZ
-        ExpandString //REG_EXPAND_SZ
+        String,     //REG_SZ / REG_EXPAND_SZ
     };
 
     DataManager();
