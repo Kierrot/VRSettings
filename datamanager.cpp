@@ -42,12 +42,12 @@ QString DataManager::grepRegistryContent(const QString &subKey, const QString &s
         }
     }
     RegCloseKey(hKey);
-    return NULL;
+    return "";
 }
 
 QList<RegistryEntry> DataManager::grepRegistryContent(const QString &subKey){
     QList<RegistryEntry> registryMap;
-    HKEY hKey;
+    HKEY hKey = NULL;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS){
         wchar_t keys[MAX_PATH];
         DWORD keySize = 1024, index = 0, val = 0, size = sizeof(DWORD);
@@ -58,8 +58,8 @@ QList<RegistryEntry> DataManager::grepRegistryContent(const QString &subKey){
             index++;
             keySize = 1024, size = sizeof(DWORD);
         }
+        RegCloseKey(hKey);
     }
-    RegCloseKey(hKey);
     return registryMap;
 }
 
@@ -81,7 +81,7 @@ void DataManager::setRegistryValueData(const QString &subKey, const QString &val
         winType = REG_SZ;
         strVal = value.toString();
         dataPtr = (const BYTE*)strVal.utf16();
-        dataSize = (value.toString().length() + 1) * sizeof(short);
+        dataSize = (value.toString().length() + 1) * sizeof(wchar_t);
         break;
     }
 
@@ -113,6 +113,7 @@ void DataManager::createRegistryValue(const QString &subKey, const QString &valu
 }
 
 void DataManager::deleteRegistryValue(const QString &subKey, const QString &valueName) {
+    qDebug() << subKey << " " << valueName;
     LSTATUS status = RegDeleteKeyValueW(
         HKEY_LOCAL_MACHINE,
         (LPCWSTR)subKey.utf16(),

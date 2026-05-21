@@ -31,6 +31,7 @@ public:
     void updateLists();
     void changeLayersSystemOrder(DataManager::DataType layerAddress, QList<RegistryEntry>);
     void setRegistryValueData(const QString &path, const QString &key, QVariant val, DataManager::RegType type);
+    void deleteRegistryValue(const QString &path, const QString &key);
 
     struct Item {
         DataManager::DataType type;
@@ -38,6 +39,7 @@ public:
         QString registryKey;
         int isActive;
     };
+
     QList<DataManager::Item> fetchData(DataManager::DataType dataType);
 
 private:
@@ -48,7 +50,7 @@ private:
 
     void clearRegistryFolder(const QString &path);
     void createRegistryValue(const QString &path, const QString &key);
-    void deleteRegistryValue(const QString &path, const QString &key);
+
 
 };
 

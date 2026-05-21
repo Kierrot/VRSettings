@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QFileInfo>
 #include "datamanager.h"
 
 using RegistryEntry = QPair<QString, int>;

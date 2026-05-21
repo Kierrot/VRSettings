@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->impLayers->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex&, int start, int end, const QModelIndex&, int dest) {
+                if (dest > start) dest--;
                 if (dest >= manager.implicitLayers.size()) {
                     dest = manager.implicitLayers.size() - 1;
                 }
@@ -32,11 +33,29 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->runtimeComboBox, &QComboBox::currentIndexChanged, this,
             [this](){
-                manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::RuntimeActive),
+        QString newRuntimePath = ui->runtimeComboBox->currentData().toString();
+            if(FileManager::isFileExists(newRuntimePath)){
+                    manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::RuntimeActive),
                                      "ActiveRuntime",
                                      ui->runtimeComboBox->currentData().toString(),
                                      DataManager::RegType::String
-                                     );
+                                     );}
+            else{
+                QMessageBox::StandardButton reply;
+                reply = QMessageBox::question(
+                    this,
+                    "Runtime Corrupted!",
+                    "Delete from Registry?",
+                    QMessageBox::Yes | QMessageBox::No
+                    );
+
+                if (reply == QMessageBox::Yes) {
+                    manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::RuntimeAvailable), newRuntimePath);
+                    manager.updateLists();
+                    updateUI();
+                }
+
+            }
     });
 
 }

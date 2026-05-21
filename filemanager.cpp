@@ -17,6 +17,8 @@ QJsonDocument FileManager::openJson(const QString &jsonPath){
         }
         return doc;
     }
+    return QJsonDocument();
+
 }
 
 QString FileManager::getJsonElementByName(const QString &jsonPath, const QString &property){
@@ -47,12 +49,11 @@ QJsonValue FileManager::getJsonElementByName(const QJsonObject &obj, const QStri
 
 bool FileManager::isFileExists(const QString &jsonPath){
     QFile jsonFile = jsonPath;
-
-    if (!jsonFile.open(QIODevice::ReadOnly)) {
-        qDebug()  << jsonPath << ".json reading error:" << jsonFile.errorString();
-        return false;
+    if (jsonFile.open(QIODevice::ReadOnly) && QFileInfo::exists(jsonPath)) {
+        return true;
     }
-    return true;
+    qDebug()  << jsonPath << ".json reading error:" << jsonFile.errorString();
+    return false;
 }
 
 

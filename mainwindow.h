@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QList>
 #include <QListWidgetItem>
 #include <QFileInfo>
