@@ -58,6 +58,42 @@ MainWindow::MainWindow(QWidget *parent)
             }
     });
 
+    connect(ui->fromImptoExp, &QPushButton::clicked, this, [this]() {
+        if(!ui->impLayers->currentItem())
+            return;
+
+        auto item = ui->impLayers->currentItem();
+        QString jsonName = item->toolTip();
+
+        if(ui->impLayers->currentItem()->isSelected()){
+            manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::Implicit), jsonName);
+            manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::Explicit), jsonName, item->checkState() == 0 ? 1 : 0, DataManager::RegType::DWord);
+        }
+        manager.updateLists();
+        updateUI();
+    });
+
+    connect(ui->fromExptoImp, &QPushButton::clicked, this, [this]() {
+        if(!ui->expLayers->currentItem())
+            return;
+
+        auto item = ui->expLayers->currentItem();
+        QString jsonName = item->toolTip();
+
+        if(ui->expLayers->currentItem()->isSelected())
+        {
+            manager.getRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName);
+            manager.setRegistryValueData(
+                manager.getRegKey(DataManager::DataType::Implicit),
+                jsonName,
+                manager.getRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName),
+                DataManager::RegType::DWord);
+
+            manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName);
+        }
+        manager.updateLists();
+        updateUI();
+    });
 }
 
 MainWindow::~MainWindow()

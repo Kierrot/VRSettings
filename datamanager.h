@@ -23,6 +23,7 @@ public:
     DataManager();
 
     QString getRegKey(DataType);
+    QVariant getRegistryValue(const QString &subKey, const QString &key);
     QList<RegistryEntry> implicitLayers;
     QList<RegistryEntry> explicitLayers;
     QList<RegistryEntry> availableRuntimes;
@@ -41,8 +42,6 @@ public:
     };
 
     QList<DataManager::Item> fetchData(DataManager::DataType dataType);
-
-private:
     QList<RegistryEntry> grepRegistryContent(const QString &path);
     QList<DataManager::Item> moveToFront(QList<DataManager::Item> &list);
 

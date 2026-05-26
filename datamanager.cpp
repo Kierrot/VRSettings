@@ -45,6 +45,22 @@ QString DataManager::grepRegistryContent(const QString &subKey, const QString &s
     return "";
 }
 
+QVariant DataManager::getRegistryValue(const QString &subKey, const QString &key){
+    HKEY hKey;
+    DWORD buffer;
+    DWORD size = sizeof(DWORD);
+    DWORD dwType;
+    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS){
+        if(RegQueryValueExW(hKey, (LPCWSTR)key.utf16(), NULL, &dwType, (LPBYTE)&buffer, &size) == ERROR_SUCCESS){
+            qDebug() << "buffer" << buffer;
+            RegCloseKey(hKey);
+            return QVariant((int)buffer);
+        }
+    }
+    else return 1;
+    RegCloseKey(hKey);
+}
+
 QList<RegistryEntry> DataManager::grepRegistryContent(const QString &subKey){
     QList<RegistryEntry> registryMap;
     HKEY hKey = NULL;
@@ -100,17 +116,11 @@ void DataManager::changeLayersSystemOrder(DataManager::DataType layer, QList<Reg
         deleteRegistryValue(getRegKey(layer), pair.first);
     }
     for(const auto &pair : list){
-        createRegistryValue(getRegKey(layer), pair.first);
         setRegistryValueData(getRegKey(layer), pair.first, pair.second, DataManager::RegType::DWord);
         qDebug() << pair.first <<  pair.second;
     }
 }
 
-void DataManager::createRegistryValue(const QString &subKey, const QString &valueName){
-    HKEY hKey;
-    RegCreateKeyEx(HKEY_LOCAL_MACHINE, (LPCWSTR)subKey.utf16(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-    RegCloseKey(hKey);
-}
 
 void DataManager::deleteRegistryValue(const QString &subKey, const QString &valueName) {
     qDebug() << subKey << " " << valueName;
