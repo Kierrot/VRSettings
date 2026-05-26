@@ -8,9 +8,13 @@
 
 **plans**
 
+*dreams*
+
 \- - some design
 
-\- - opengl? perhaps openxr capture from hmd/ idk if possible but sounds fun huh?
+\- - opengl / vulkan hmd image capture 
+
+\- - lense distortion effect
 
 
 
@@ -20,7 +24,9 @@
 
 \+ - change layers on order drag'n'drop
 
-0 - active runtime toggle
+\+ - active runtime toggle
+
+\+ move implicit ↔ explicit layers
 
 0 - runtime managment / custom runtimes
 
@@ -34,6 +40,8 @@
 
 \- - active runtime toggle
 
+\- - move implicit ↔ explicit layers
+
 
 
 
@@ -45,6 +53,8 @@
 \- - change layers on order drag'n'drop
 
 \- - active runtime toggle
+
+\- - move implicit ↔ explicit layers
 
 
 
