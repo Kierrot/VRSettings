@@ -57,7 +57,7 @@ QVariant DataManager::getRegistryValue(const QString &subKey, const QString &key
             return QVariant((int)buffer);
         }
     }
-    else return 1;
+    else return QVariant();
     RegCloseKey(hKey);
 }
 

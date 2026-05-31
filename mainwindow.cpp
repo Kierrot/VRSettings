@@ -8,34 +8,36 @@ MainWindow::MainWindow(QWidget *parent)
     updateUI();
 
     connect(ui->syncWithReg, &QPushButton::clicked, this, [this]() {
-        manager.updateLists();
+        dm.updateLists();
         updateUI();
     });
 
     connect(ui->impLayers->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex&, int start, int end, const QModelIndex&, int dest) {
                 if (dest > start) dest--;
-                if (dest >= manager.implicitLayers.size()) {
-                    dest = manager.implicitLayers.size() - 1;
+                if (dest >= dm.implicitLayers.size()) {
+                    dest = dm.implicitLayers.size() - 1;
                 }
-                manager.implicitLayers.move(start, dest);
-                manager.changeLayersSystemOrder(DataManager::DataType::Implicit, manager.implicitLayers);
+                dm.implicitLayers.move(start, dest);
+                dm.changeLayersSystemOrder(DataManager::DataType::Implicit, dm.implicitLayers);
             });
 
     connect(ui->expLayers->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex&, int start, int end, const QModelIndex&, int dest) {
-                if (dest >= manager.explicitLayers.size()) {
-                    dest = manager.explicitLayers.size() - 1;
+                if (dest >= dm.explicitLayers.size()) {
+                    dest = dm.explicitLayers.size() - 1;
                 }
-                manager.explicitLayers.move(start, dest);
-                manager.changeLayersSystemOrder(DataManager::DataType::Explicit, manager.explicitLayers);
+                dm.explicitLayers.move(start, dest);
+                dm.changeLayersSystemOrder(DataManager::DataType::Explicit, dm.explicitLayers);
             });
 
     connect(ui->runtimeComboBox, &QComboBox::currentIndexChanged, this,
             [this](){
         QString newRuntimePath = ui->runtimeComboBox->currentData().toString();
+        qDebug() << ui->runtimeComboBox->currentData().toString();
+
             if(FileManager::isFileExists(newRuntimePath)){
-                    manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::RuntimeActive),
+                    dm.setRegistryValueData(dm.getRegKey(DataManager::DataType::RuntimeActive),
                                      "ActiveRuntime",
                                      ui->runtimeComboBox->currentData().toString(),
                                      DataManager::RegType::String
@@ -50,8 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
                     );
 
                 if (reply == QMessageBox::Yes) {
-                    manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::RuntimeAvailable), newRuntimePath);
-                    manager.updateLists();
+                    dm.deleteRegistryValue(dm.getRegKey(DataManager::DataType::RuntimeAvailable), newRuntimePath);
+                    dm.updateLists();
                     updateUI();
                 }
 
@@ -66,10 +68,10 @@ MainWindow::MainWindow(QWidget *parent)
         QString jsonName = item->toolTip();
 
         if(ui->impLayers->currentItem()->isSelected()){
-            manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::Implicit), jsonName);
-            manager.setRegistryValueData(manager.getRegKey(DataManager::DataType::Explicit), jsonName, item->checkState() == 0 ? 1 : 0, DataManager::RegType::DWord);
+            dm.deleteRegistryValue(dm.getRegKey(DataManager::DataType::Implicit), jsonName);
+            dm.setRegistryValueData(dm.getRegKey(DataManager::DataType::Explicit), jsonName, item->checkState() == 0 ? 1 : 0, DataManager::RegType::DWord);
         }
-        manager.updateLists();
+        dm.updateLists();
         updateUI();
     });
 
@@ -82,17 +84,92 @@ MainWindow::MainWindow(QWidget *parent)
 
         if(ui->expLayers->currentItem()->isSelected())
         {
-            manager.getRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName);
-            manager.setRegistryValueData(
-                manager.getRegKey(DataManager::DataType::Implicit),
+            dm.getRegistryValue(dm.getRegKey(DataManager::DataType::Explicit), jsonName);
+            dm.setRegistryValueData(
+                dm.getRegKey(DataManager::DataType::Implicit),
                 jsonName,
-                manager.getRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName),
+                dm.getRegistryValue(dm.getRegKey(DataManager::DataType::Explicit), jsonName),
                 DataManager::RegType::DWord);
 
-            manager.deleteRegistryValue(manager.getRegKey(DataManager::DataType::Explicit), jsonName);
+            dm.deleteRegistryValue(dm.getRegKey(DataManager::DataType::Explicit), jsonName);
         }
-        manager.updateLists();
+        dm.updateLists();
         updateUI();
+    });
+
+
+    connect(ui->addLayerPush, &QPushButton::clicked, this, [this]() {
+        QMessageBox mbLayerType;
+        mbLayerType.setWindowTitle("Choose New Layer Type");
+        mbLayerType.setText("Which Type of layer do youwant to add?");
+        QPushButton *chooseImplicit = mbLayerType.addButton("Implicit", QMessageBox::AcceptRole);
+        QPushButton *chooseExcplicit = mbLayerType.addButton("Excplicit", QMessageBox::ActionRole);
+        QPushButton *cancelButton = mbLayerType.addButton("Cancel", QMessageBox::RejectRole);
+        QString filePath;
+
+        auto getLayerPath = []() {
+            QString filePath = QFileDialog::getOpenFileName(
+                nullptr,                      // Родительский виджет
+                "Поиск файла для открытия",   // Заголовок окна
+                "C:\\",                       // Начальная директория
+                "Текстовые (*.json) ;; Все файлы (*.*)" // Фильтр файлов
+                );
+
+            if (!filePath.isEmpty()) {
+            };
+
+            return filePath;
+        };
+
+        mbLayerType.exec();
+
+        if (mbLayerType.clickedButton() == chooseImplicit) {
+            filePath = getLayerPath();
+            dm.setRegistryValueData(
+                dm.getRegKey(DataManager::DataType::Implicit),
+                filePath,
+                0,
+                DataManager::RegType::DWord);
+
+        } else if (mbLayerType.clickedButton() == chooseExcplicit) {
+            filePath = getLayerPath();
+            dm.setRegistryValueData(
+                dm.getRegKey(DataManager::DataType::Explicit),
+                filePath,
+                0,
+                DataManager::RegType::DWord);
+        }
+        else{
+            mbLayerType.close();
+        }
+
+        dm.updateLists();
+        updateUI();
+    });
+
+    connect(ui->delLayerPush, &QPushButton::clicked, this, [this](){
+        bool isImplicit = ui->impLayers->currentItem() ? true : false;
+        if(!isImplicit && !ui->expLayers->currentItem())
+            return;
+
+        auto item = isImplicit ? ui->impLayers->currentItem() : ui->expLayers->currentItem();
+
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(
+            this,
+            "Deleting Layer",
+            "Delete from Registry?",
+            QMessageBox::Yes | QMessageBox::No
+            );
+
+
+        if (reply == QMessageBox::Yes) {
+            qDebug() << "Deleting" << dm.getRegKey(isImplicit ? DataManager::DataType::Implicit : DataManager::DataType::Explicit) << item->toolTip();
+            dm.deleteRegistryValue(dm.getRegKey(isImplicit ? DataManager::DataType::Implicit : DataManager::DataType::Explicit), item->toolTip());
+            dm.updateLists();
+            updateUI();
+        }
+
     });
 }
 
@@ -113,17 +190,17 @@ void MainWindow::updateUI(){
     ui->runtimeComboBox->clear();
 
     fillListWidget(ui->impLayers,
-                   manager.fetchData(DataManager::DataType::Implicit),
-                   manager.getRegKey(DataManager::DataType::Implicit)
+                   dm.fetchData(DataManager::DataType::Implicit),
+                   dm.getRegKey(DataManager::DataType::Implicit)
                    );
 
     fillListWidget(ui->expLayers,
-                   manager.fetchData(DataManager::DataType::Explicit),
-                   manager.getRegKey(DataManager::DataType::Explicit)
+                   dm.fetchData(DataManager::DataType::Explicit),
+                   dm.getRegKey(DataManager::DataType::Explicit)
                    );
 
     fillComboBox(ui->runtimeComboBox,
-                 manager.fetchData(DataManager::DataType::RuntimeAvailable)
+                 dm.fetchData(DataManager::DataType::RuntimeAvailable)
                  );
     blockAllSignals(false);
 }
@@ -154,12 +231,12 @@ void MainWindow::fillComboBox(QComboBox *combo, const QList<DataManager::Item> &
 }
 
 void MainWindow::on_impLayers_itemChanged(QListWidgetItem *item) {
-    manager.setRegistryValueData(
+    dm.setRegistryValueData(
         item->data(Qt::UserRole).toString(),
         item->toolTip(),
         item->checkState() ==  Qt::Checked ? 0 : 1,
         DataManager::RegType::DWord
     );
-    manager.updateLists();
+    dm.updateLists();
 }
 

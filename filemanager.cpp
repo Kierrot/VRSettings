@@ -1,6 +1,7 @@
 #include "filemanager.h"
 #include <qDebug>
 
+
 QJsonDocument FileManager::openJson(const QString &jsonPath){
     QFile jsonFile = jsonPath;
 

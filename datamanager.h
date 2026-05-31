@@ -21,7 +21,6 @@ public:
     };
 
     DataManager();
-
     QString getRegKey(DataType);
     QVariant getRegistryValue(const QString &subKey, const QString &key);
     QList<RegistryEntry> implicitLayers;

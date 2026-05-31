@@ -7,6 +7,7 @@
 #include <QListWidgetItem>
 #include <QFileInfo>
 #include <QComboBox>
+#include <QFileDialog>
 #include "datamanager.h"
 #include "filemanager.h"
 #include "ui_mainwindow.h"
@@ -28,7 +29,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    DataManager manager;
+    DataManager dm;
+    FileManager fm;
     void updateUI();
     void blockAllSignals(bool flag);
     void fillListWidget(QListWidget *list, const QList<DataManager::Item> &items, const QString &branchPath);
