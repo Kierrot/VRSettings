@@ -115,7 +115,8 @@ MainWindow::MainWindow(QWidget *parent)
                 "Текстовые (*.json) ;; Все файлы (*.*)" // Фильтр файлов
                 );
 
-            if (!filePath.isEmpty()) {
+            if (filePath.isEmpty()) {
+                return QString();
             };
 
             return filePath;
@@ -123,21 +124,26 @@ MainWindow::MainWindow(QWidget *parent)
 
         mbLayerType.exec();
 
+
         if (mbLayerType.clickedButton() == chooseImplicit) {
             filePath = getLayerPath();
-            dm.setRegistryValueData(
-                dm.getRegKey(DataManager::DataType::Implicit),
-                filePath,
-                0,
-                DataManager::RegType::DWord);
+            if(!filePath.isEmpty() && !filePath.isNull()){
+                dm.setRegistryValueData(
+                    dm.getRegKey(DataManager::DataType::Implicit),
+                    filePath,
+                    0,
+                    DataManager::RegType::DWord);
+            }
 
         } else if (mbLayerType.clickedButton() == chooseExcplicit) {
             filePath = getLayerPath();
-            dm.setRegistryValueData(
-                dm.getRegKey(DataManager::DataType::Explicit),
-                filePath,
-                0,
-                DataManager::RegType::DWord);
+             if(!filePath.isEmpty() && !filePath.isNull()){
+                dm.setRegistryValueData(
+                    dm.getRegKey(DataManager::DataType::Explicit),
+                    filePath,
+                    0,
+                    DataManager::RegType::DWord);
+             }
         }
         else{
             mbLayerType.close();
